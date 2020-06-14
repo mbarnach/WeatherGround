@@ -15,7 +15,7 @@ jobs:
         os: [ubuntu-latest, macos-latest]
         swift: ["5.1"]
     env:
-      STATION: ${{ steps.get_version.outputs.STATION }}
+      STATION: ${{ secrets.STATION }}
       APIKEY: ${{ secrets.APIKEY }}
     
     steps:
