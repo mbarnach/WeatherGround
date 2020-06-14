@@ -8,15 +8,22 @@ on:
 
 jobs:
   build:
-
-    runs-on: macos-latest
-
+    name: Swift ${{ matrix.swift }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        swift: ["5.1"]
+    env:
+      STATION: ${{ steps.get_version.outputs.STATION }}
+      APIKEY: ${{ secrets.APIKEY }}
+    
     steps:
-    - uses: actions/checkout@v2
-    - name: Build
-      run: swift build -v
-    - name: Run tests
-      env:
-        STATION: ${{ steps.get_version.outputs.STATION }}
-        APIKEY: ${{ secrets.APIKEY }}
-      run: swift test -v
+      - uses: actions/checkout@v2
+      - uses: fwal/setup-swift@v1
+        with:
+          swift-version: ${{ matrix.swift }}
+      - name: Build
+        run: swift build -v
+      - name: Run tests
+        run: swift test -v
