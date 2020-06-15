@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 /// Retrieve measure for a Weather Underground station, using the API.
 public struct WeatherGround {
