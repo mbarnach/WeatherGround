@@ -1,0 +1,29 @@
+name: Swift
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: Swift ${{ matrix.swift }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        swift: ["5.1"]
+    env:
+      STATION: ${{ secrets.STATION }}
+      APIKEY: ${{ secrets.APIKEY }}
+    
+    steps:
+      - uses: actions/checkout@v2
+      - uses: fwal/setup-swift@v1
+        with:
+          swift-version: ${{ matrix.swift }}
+      - name: Build
+        run: swift build -v
+      - name: Run tests
+        run: swift test -v
