@@ -67,11 +67,24 @@ final class WeatherGroundTests: XCTestCase {
         wait(for: [expectation], timeout: 10.0)
     }
 
+    func testRetrieveForecast() {
+        let expectation = XCTestExpectation(description: #function)
+        WeatherGround.measure.forecast(for: Location.geo(latitude: 33.74, longitude: -84.39)){ fiveDay in
+            defer{ expectation.fulfill() }
+            guard case .success = fiveDay else {
+                XCTFail("Unable to retrieve the forecast.")
+                return
+            }
+        }
+        wait(for: [expectation], timeout: 10.0)
+    }
+
     static var allTests = [
         ("testBase", testBase),
         ("testRetrieveCurrent", testRetrieveCurrent),
         ("testRetrieveHourly", testRetrieveHourly),
         ("testRetrieveDaily", testRetrieveDaily),
         ("testRetrieveHistory", testRetrieveHistory),
+        ("testRetrieveForecast", testRetrieveForecast),
     ]
 }

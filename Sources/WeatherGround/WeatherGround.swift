@@ -116,30 +116,78 @@ public struct WeatherGround {
         task.resume()
     }
 
+    public func forecast(for location: Location,
+                         narative language: String = "en-US",
+                         fiveDay: @escaping (Result<Forecast, WeatherError>) -> Void) {
+        guard case .success(let url) = make(for: .fiveDayForecast, 
+                                            location: location,
+                                            language: language) else {
+            return fiveDay(.failure(.internalError))
+        }
+        let task = URLSession.shared.dataTask(with: url){ data, response, error in
+            guard let jsonData = data else {
+                return fiveDay(.failure(.noData))
+            }
+            let decoder = JSONDecoder()
+            do {
+                let fiveDayForecast = try decoder.decode(Forecast.self, from: jsonData)
+                fiveDay(.success(fiveDayForecast))
+            } catch {
+                return fiveDay(.failure(.formatError))
+            }
+        }
+        task.resume()
+    }
+
     /// Make an URL for a type of measure and a specified day.
     ///
     /// Parameters:
     ///  - type: The type of measures to retrieve.
     ///  - date: The optional date to query.
+    ///  - location: The location code for a forecast. This exclude the station ID from the request.
+    ///  - language: The language code. Include only in forecast mode (ie. location not nil).
     /// Returns: The URL for the Weather Underground API to use in the query.
-    private func make(for type: MeasureType, with date: Date? = nil) -> Result<URL, WeatherError> {
-        guard self.station.isEmpty == false,
-              self.apiKey.isEmpty == false
-            else {
+    private func make(for type: MeasureType,
+                      with date: Date? = nil,
+                      location: Location? = nil,
+                      language: String? = nil) -> Result<URL, WeatherError> {
+        guard self.apiKey.isEmpty == false else {
             return .failure(.invalidConfiguration)
         }
         var urlComponents = URLComponents()
         urlComponents.scheme = "https"
         urlComponents.host = "api.weather.com"
-        urlComponents.path = type.historyURL
+        urlComponents.path = type.endpoint
         urlComponents.queryItems = [
-            URLQueryItem(name: "stationId", value: self.station),
             URLQueryItem(name: "format", value: "json"),
             URLQueryItem(name: "units", value: "m"),
             URLQueryItem(name: "apiKey", value: self.apiKey)
         ]
         if let date = date {
             urlComponents.queryItems?.append(URLQueryItem(name: "date", value: date.weather))
+        }
+        if let location = location {
+            guard let language = language else {
+                return .failure(.invalidConfiguration)
+            }
+            switch location {
+                case let .geo(latitude, longitude):
+                    urlComponents.queryItems?.append(URLQueryItem(name: "geocode", value: "\(latitude),\(longitude)"))
+                case let .iata(airport):
+                    urlComponents.queryItems?.append(URLQueryItem(name: "iataCode", value: airport))
+                case let .icao(airport):
+                    urlComponents.queryItems?.append(URLQueryItem(name: "icaoCode", value: airport))
+                case let .place(id):
+                    urlComponents.queryItems?.append(URLQueryItem(name: "placeid", value: id))
+                case let .postal(zip):
+                    urlComponents.queryItems?.append(URLQueryItem(name: "postalKey", value: zip))
+            }
+            urlComponents.queryItems?.append(URLQueryItem(name: "language", value: language))
+        } else {
+            guard self.station.isEmpty == false else {
+                return .failure(.invalidConfiguration)
+            }
+            urlComponents.queryItems?.append(URLQueryItem(name: "stationId", value: self.station))
         }
 
         guard let url = urlComponents.url else {
