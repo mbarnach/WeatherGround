@@ -117,7 +117,7 @@ public struct WeatherGround {
     }
 
     public func forecast(for location: Location,
-                         narative language: String = "en-US",
+                         narrative language: String = "en-US",
                          fiveDay: @escaping (Result<Forecast, WeatherError>) -> Void) {
         guard case .success(let url) = make(for: .fiveDayForecast, 
                                             location: location,

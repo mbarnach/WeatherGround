@@ -51,8 +51,8 @@ The 5 day forecast is also available through `forecast`.
 It doesn't required a `station` value, only the `apiKey`.
 
 ```swift
-WeatherGround.measure.forecast(for: Location.geo(latitude: 52.29, longitude: 4.59)){ fiveDay in
-    guard case .success = fiveDay else {
+WeatherGround.measure.forecast(for: Location.geo(latitude: 33.74, longitude: -84.39)){ fiveDay in
+    guard case .success(let forecast) = fiveDay else {
         print("Unable to retrieve the forecast")
         return
     }
